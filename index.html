@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ache o Presente</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #050505;
+            color: #ffffff;
+            overflow-x: hidden;
+            user-select: none;
+        }
+
+        /* Efeito de Lanterna por Canvas */
+        #flashlight-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 20;
+            transition: opacity 0.8s ease;
+        }
+
+        /* Glow e efeitos Neon */
+        .neon-text {
+            text-shadow: 0 0 10px rgba(244, 114, 182, 0.6), 0 0 20px rgba(244, 114, 182, 0.4);
+        }
+
+        .gift-box {
+            animation: pulse-glow 2s infinite ease-in-out;
+            cursor: pointer;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% {
+                filter: drop-shadow(0 0 8px rgba(236, 72, 153, 0.6));
+                transform: scale(1);
+            }
+            50% {
+                filter: drop-shadow(0 0 20px rgba(236, 72, 153, 0.9));
+                transform: scale(1.08);
+            }
+        }
+
+        /* Animações de transição de tela */
+        .fade-in {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #09090b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #27272a;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3f3f46;
+        }
+    </style>
+</head>
+<body class="h-full bg-black text-white relative select-none overflow-hidden">
+
+    <!-- Canvas para efeito de Lanterna -->
+    <canvas id="flashlight-canvas"></canvas>
+
+    <!-- FASE 1: A BUSCA -->
+    <div id="phase-1" class="relative w-full h-screen flex flex-col justify-between items-center p-6 z-10">
+        <!-- Título Fixo no Topo -->
+        <header class="mt-8 text-center pointer-events-auto">
+            <h1 class="text-3xl md:text-5xl font-bold tracking-wider text-pink-400 neon-text uppercase">
+                <i class="fa-solid fa-magnifying-glass text-2xl mr-2"></i>Ache o Presente
+            </h1>
+            <p class="text-sm md:text-base text-gray-400 mt-2 font-light">
+                Mova o mouse ou passe o dedo na tela para acender a lanterna e encontrar o segredo.
+            </p>
+        </header>
+
+        <!-- Presente Escondido (Posicionamento dinâmico via JS) -->
+        <div id="hidden-gift" class="gift-box absolute p-4 rounded-full bg-pink-500/10 border border-pink-500/20 backdrop-blur-sm hover:bg-pink-500/30 transition-all duration-300">
+            <button id="gift-button" aria-label="Abrir Presente" class="text-5xl md:text-6xl text-pink-400 focus:outline-none">
+                <i class="fa-solid fa-gift"></i>
+            </button>
+        </div>
+
+        <!-- Dica sutil no rodapé -->
+        <footer class="mb-6 text-xs text-gray-600 tracking-widest uppercase">
+            Olhe bem ao redor...
+        </footer>
+    </div>
+
+    <!-- FASE 2: MODAL / COFRE DE SENHA -->
+    <div id="phase-2" class="hidden fixed inset-0 z-30 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md fade-in">
+        <div class="bg-zinc-900 border border-pink-500/30 w-full max-w-md rounded-2xl p-6 md:p-8 shadow-2xl text-center relative overflow-hidden">
+            <!-- Glow background effect -->
+            <div class="absolute -top-12 -left-12 w-32 h-32 bg-pink-500/20 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -bottom-12 -right-12 w-32 h-32 bg-purple-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="w-16 h-16 bg-pink-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-pink-500/30 text-pink-400 text-2xl">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+
+            <h2 class="text-2xl font-bold text-white mb-2">Cofre do Presente</h2>
+            <p class="text-xs text-pink-400 font-medium tracking-wide uppercase mb-6 bg-pink-950/40 py-1.5 px-3 rounded-full inline-block border border-pink-800/40">
+                <i class="fa-regular fa-lightbulb mr-1"></i> Dica: Te chamo assim todo dia (4 palavras)
+            </p>
+
+            <form id="password-form" onsubmit="return false;" class="space-y-4">
+                <div class="relative">
+                    <input 
+                        type="text" 
+                        id="password-input" 
+                        placeholder="Digite a senha aqui..."
+                        autocomplete="off"
+                        class="w-full bg-zinc-950 border border-zinc-800 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 rounded-xl px-4 py-3.5 text-center text-white placeholder-zinc-500 outline-none transition duration-200"
+                    >
+                </div>
+
+                <div id="error-message" class="hidden text-red-400 text-xs font-medium flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <span>Senha incorreta! Tente novamente.</span>
+                </div>
+
+                <button 
+                    type="submit" 
+                    id="submit-password-btn"
+                    class="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-semibold py-3.5 px-6 rounded-xl shadow-lg shadow-pink-500/25 active:scale-[0.98] transition duration-200"
+                >
+                    Desbloquear <i class="fa-solid fa-key ml-1 text-xs"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- FASE 3: TEXTO DIGITADO E MÚLTIPLA ESCOLHA -->
+    <div id="phase-3" class="hidden fixed inset-0 z-30 flex items-center justify-center p-4 md:p-6 bg-zinc-950/95 backdrop-blur-lg overflow-y-auto fade-in">
+        <div class="max-w-xl w-full bg-zinc-900/90 border border-zinc-800 rounded-3xl p-6 md:p-8 shadow-2xl relative my-auto">
+            
+            <!-- Header decorativo -->
+            <div class="flex items-center gap-2 mb-6 border-b border-zinc-800 pb-4">
+                <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                <span class="text-xs text-zinc-500 font-mono ml-2">mensagem_especial.txt</span>
+            </div>
+
+            <!-- Efeito de Digitação do Texto -->
+            <div class="min-h-[100px] mb-6">
+                <p id="typewriter-text" class="text-base md:text-lg text-zinc-200 font-medium leading-relaxed font-sans"></p>
+                <span id="cursor-blink" class="inline-block w-2 h-5 bg-pink-500 ml-1 translate-y-0.5 animate-pulse"></span>
+            </div>
+
+            <!-- Opções de Múltipla Escolha (Só aparecem após terminar a digitação) -->
+            <div id="options-container" class="opacity-0 transition-opacity duration-700 space-y-4">
+                <div class="flex justify-between items-center text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">
+                    <span>Escolha 2 opções:</span>
+                    <span id="selection-counter" class="text-pink-400 font-bold">0 / 2 selecionadas</span>
+                </div>
+
+                <div class="space-y-3" id="checkbox-group">
+                    <!-- Opção 1 -->
+                    <label class="option-card flex items-center p-4 rounded-xl bg-zinc-950 border border-zinc-800 hover:border-zinc-700 cursor-pointer transition-all duration-200">
+                        <input type="checkbox" value="Sup. da webcam" class="option-checkbox w-5 h-5 accent-pink-500 rounded focus:ring-0">
+                        <span class="ml-3 text-sm md:text-base text-zinc-200 font-medium">1. Sup. da webcam</span>
+                    </label>
+
+                    <!-- Opção 2 -->
+                    <label class="option-card flex items-center p-4 rounded-xl bg-zinc-950 border border-zinc-800 hover:border-zinc-700 cursor-pointer transition-all duration-200">
+                        <input type="checkbox" value="Muitos livepix te chamando de melhor do mundoooo" class="option-checkbox w-5 h-5 accent-pink-500 rounded focus:ring-0">
+                        <span class="ml-3 text-sm md:text-base text-zinc-200 font-medium">2. Muitos livepix te chamando de melhor do mundoooo</span>
+                    </label>
+
+                    <!-- Opção 3 -->
+                    <label class="option-card flex items-center p-4 rounded-xl bg-zinc-950 border border-zinc-800 hover:border-zinc-700 cursor-pointer transition-all duration-200">
+                        <input type="checkbox" value="Vipp no seu rpzinho" class="option-checkbox w-5 h-5 accent-pink-500 rounded focus:ring-0">
+                        <span class="ml-3 text-sm md:text-base text-zinc-200 font-medium">3. Vipp no seu rpzinho</span>
+                    </label>
+
+                    <!-- Opção 4 -->
+                    <label class="option-card flex items-center p-4 rounded-xl bg-zinc-950 border border-zinc-800 hover:border-zinc-700 cursor-pointer transition-all duration-200">
+                        <input type="checkbox" value="Te chamar de minha melhor do mundo o dia todooo" class="option-checkbox w-5 h-5 accent-pink-500 rounded focus:ring-0">
+                        <span class="ml-3 text-sm md:text-base text-zinc-200 font-medium">4. Te chamar de minha melhor do mundo o dia todooo</span>
+                    </label>
+                </div>
+
+                <!-- Botão de Confirmação -->
+                <button 
+                    id="confirm-btn" 
+                    disabled
+                    class="w-full mt-6 bg-pink-600 hover:bg-pink-500 disabled:bg-zinc-800 disabled:text-zinc-600 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg transition duration-200"
+                >
+                    Confirmar Escolhas (0/2)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE FINALIZAÇÃO DA ESCOLHA -->
+    <div id="final-modal" class="hidden fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md fade-in">
+        <div class="max-w-md w-full bg-zinc-900 border border-pink-500/40 rounded-3xl p-8 text-center relative shadow-2xl">
+            <div class="w-20 h-20 bg-pink-500/20 text-pink-400 rounded-full flex items-center justify-center mx-auto mb-4 border border-pink-500/40 text-4xl">
+                <i class="fa-solid fa-heart"></i>
+            </div>
+
+            <h3 class="text-2xl font-bold text-white mb-2">Pedido Confirmado! ✨</h3>
+            <p class="text-zinc-400 text-sm mb-6">Você escolheu com perfeição os seus presentes:</p>
+
+            <div id="chosen-items" class="space-y-3 mb-6 text-left">
+                <!-- Preenchido via JS -->
+            </div>
+
+            <p class="text-pink-400 text-xs font-semibold uppercase tracking-wider mb-6">
+                Pode me mandar o print agora! ❤️
+            </p>
+
+            <button 
+                onclick="location.reload()" 
+                class="w-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-semibold py-3 px-6 rounded-xl transition duration-200"
+            >
+                Recomeçar
+            </button>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT DA APLICAÇÃO -->
+    <script>
+        // CONFIGURAÇÕES E ESTADOS
+        const PASSWORD_TARGET = "minha melhorzona do mundo";
+        const MESSAGE_TEXT = "duozona, to mtooo querendo te dar presentihoo, ce sabe q eu amo fazer isso e q isso é bemm importante pra mim... entaum escolhaaa:";
+        
+        // Elementos DOM
+        const canvas = document.getElementById('flashlight-canvas');
+        const ctx = canvas.getContext('2d');
+        const hiddenGift = document.getElementById('hidden-gift');
+        const giftButton = document.getElementById('gift-button');
+        
+        const phase1 = document.getElementById('phase-1');
+        const phase2 = document.getElementById('phase-2');
+        const phase3 = document.getElementById('phase-3');
+        const finalModal = document.getElementById('final-modal');
+        
+        const passwordForm = document.getElementById('password-form');
+        const passwordInput = document.getElementById('password-input');
+        const errorMessage = document.getElementById('error-message');
+        
+        const typewriterText = document.getElementById('typewriter-text');
+        const cursorBlink = document.getElementById('cursor-blink');
+        const optionsContainer = document.getElementById('options-container');
+        const checkboxes = document.querySelectorAll('.option-checkbox');
+        const selectionCounter = document.getElementById('selection-counter');
+        const confirmBtn = document.getElementById('confirm-btn');
+        const chosenItemsContainer = document.getElementById('chosen-items');
+
+        // Posição do Mouse / Touch para Lanterna
+        let mousePos = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+        let isFlashlightActive = true;
+        let flashlightRadius = Math.min(window.innerWidth, window.innerHeight) * 0.25;
+
+        // Limite do raio da lanterna
+        flashlightRadius = Math.max(120, Math.min(flashlightRadius, 220));
+
+        // -------------------------------------------------------------
+        // 1. LÓGICA DA LANTERNA (CANVAS)
+        // -------------------------------------------------------------
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            flashlightRadius = Math.min(window.innerWidth, window.innerHeight) * 0.25;
+            flashlightRadius = Math.max(120, Math.min(flashlightRadius, 220));
+            drawFlashlight();
+        }
+
+        function drawFlashlight() {
+            if (!isFlashlightActive) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Camada de escuridão total
+            ctx.fillStyle = '#050505';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Recorte circular transparente da lanterna com degrade suave
+            ctx.save();
+            ctx.globalCompositeOperation = 'destination-out';
+
+            const gradient = ctx.createRadialGradient(
+                mousePos.x, mousePos.y, 0,
+                mousePos.x, mousePos.y, flashlightRadius
+            );
+            gradient.addColorStop(0, 'rgba(0, 0, 0, 1)');
+            gradient.addColorStop(0.7, 'rgba(0, 0, 0, 0.85)');
+            gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(mousePos.x, mousePos.y, flashlightRadius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+
+        function updateMousePos(clientX, clientY) {
+            mousePos.x = clientX;
+            mousePos.y = clientY;
+            drawFlashlight();
+        }
+
+        // Eventos de movimento
+        window.addEventListener('mousemove', (e) => updateMousePos(e.clientX, e.clientY));
+        window.addEventListener('touchmove', (e) => {
+            if (e.touches.length > 0) {
+                updateMousePos(e.touches[0].clientX, e.touches[0].clientY);
+            }
+        });
+        window.addEventListener('resize', resizeCanvas);
+
+        // Posicionar o Presente em local aleatório mas visível na Fase 1
+        function positionGiftRandomly() {
+            const headerHeight = 150;
+            const footerHeight = 100;
+            const padding = 60;
+
+            const minX = padding;
+            const maxX = window.innerWidth - padding - 80;
+            const minY = headerHeight + padding;
+            const maxY = window.innerHeight - footerHeight - 80;
+
+            const randomX = Math.floor(Math.random() * (maxX - minX + 1)) + minX;
+            const randomY = Math.floor(Math.random() * (maxY - minY + 1)) + minY;
+
+            hiddenGift.style.left = `${randomX}px`;
+            hiddenGift.style.top = `${randomY}px`;
+        }
+
+        // -------------------------------------------------------------
+        // 2. FASE 1 -> FASE 2: ENCONTRAR O PRESENTE
+        // -------------------------------------------------------------
+        giftButton.addEventListener('click', () => {
+            // Suaviza a escuridão da lanterna
+            canvas.style.opacity = '0';
+            setTimeout(() => {
+                isFlashlightActive = false;
+                canvas.style.display = 'none';
+            }, 800);
+
+            // Transição para o cofre de senha
+            phase2.classList.remove('hidden');
+            passwordInput.focus();
+        });
+
+        // -------------------------------------------------------------
+        // 3. FASE 2: VALIDAÇÃO DE SENHA
+        // -------------------------------------------------------------
+        passwordForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            // Sanitização da senha digitada (normalização de espaços e caixa)
+            const inputVal = passwordInput.value.trim().toLowerCase().replace(/\s+/g, ' ');
+
+            if (inputVal === PASSWORD_TARGET) {
+                errorMessage.classList.add('hidden');
+                phase2.classList.add('hidden');
+                phase3.classList.remove('hidden');
+                startTypewriter();
+            } else {
+                errorMessage.classList.remove('hidden');
+                passwordInput.classList.add('border-red-500', 'animate-shake');
+                setTimeout(() => {
+                    passwordInput.classList.remove('border-red-500', 'animate-shake');
+                }, 500);
+            }
+        });
+
+        // -------------------------------------------------------------
+        // 4. FASE 3: EFEITO DE DIGITAÇÃO (TYPEWRITER)
+        // -------------------------------------------------------------
+        function startTypewriter() {
+            let index = 0;
+            typewriterText.textContent = "";
+
+            function typeChar() {
+                if (index < MESSAGE_TEXT.length) {
+                    typewriterText.textContent += MESSAGE_TEXT.charAt(index);
+                    index++;
+                    setTimeout(typeChar, 45); // Velocidade de digitação
+                } else {
+                    // Finalizou a digitação
+                    cursorBlink.style.display = 'none';
+                    optionsContainer.classList.remove('opacity-0');
+                    optionsContainer.classList.add('opacity-100');
+                }
+            }
+
+            setTimeout(typeChar, 400);
+        }
+
+        // -------------------------------------------------------------
+        // 5. VALIDAÇÃO DE MÚLTIPLA ESCOLHA (EXATAMENTE 2)
+        // -------------------------------------------------------------
+        checkboxes.forEach(cb => {
+            cb.addEventListener('change', () => {
+                const checkedBoxes = document.querySelectorAll('.option-checkbox:checked');
+                
+                // Limita a escolha em 2 no máximo
+                if (checkedBoxes.length > 2) {
+                    cb.checked = false;
+                    return;
+                }
+
+                // Atualiza o visual do container da opção selecionada
+                document.querySelectorAll('.option-card').forEach(card => {
+                    const input = card.querySelector('.option-checkbox');
+                    if (input.checked) {
+                        card.classList.add('border-pink-500', 'bg-pink-950/20');
+                        card.classList.remove('border-zinc-800', 'bg-zinc-950');
+                    } else {
+                        card.classList.remove('border-pink-500', 'bg-pink-950/20');
+                        card.classList.add('border-zinc-800', 'bg-zinc-950');
+                    }
+                });
+
+                const count = document.querySelectorAll('.option-checkbox:checked').length;
+                selectionCounter.textContent = `${count} / 2 selecionadas`;
+
+                if (count === 2) {
+                    confirmBtn.disabled = false;
+                    confirmBtn.textContent = "Confirmar Escolhas!";
+                    confirmBtn.classList.add('neon-text');
+                } else {
+                    confirmBtn.disabled = true;
+                    confirmBtn.textContent = `Confirmar Escolhas (${count}/2)`;
+                    confirmBtn.classList.remove('neon-text');
+                }
+            });
+        });
+
+        // -------------------------------------------------------------
+        // 6. FINALIZAÇÃO E CONFETES
+        // -------------------------------------------------------------
+        confirmBtn.addEventListener('click', () => {
+            const selected = Array.from(document.querySelectorAll('.option-checkbox:checked')).map(cb => cb.value);
+
+            if (selected.length !== 2) return;
+
+            // Renderiza opções no modal final
+            chosenItemsContainer.innerHTML = selected.map((item, idx) => `
+                <div class="p-3.5 rounded-xl bg-zinc-950 border border-pink-500/30 flex items-center gap-3">
+                    <span class="w-6 h-6 rounded-full bg-pink-500/20 text-pink-400 flex items-center justify-center font-bold text-xs shrink-0">${idx + 1}</span>
+                    <span class="text-zinc-200 text-sm font-medium">${item}</span>
+                </div>
+            `).join('');
+
+            finalModal.classList.remove('hidden');
+
+            // Solta confetes festivos
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 120,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#ec4899', '#a855f7', '#ffffff']
+                });
+            }
+        });
+
+        // Inicialização na carga da página
+        window.onload = () => {
+            resizeCanvas();
+            positionGiftRandomly();
+        };
+    </script>
+</body>
+</html>
